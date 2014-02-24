@@ -95,6 +95,8 @@ LocalNotification.prototype = {
             defaults.wideImage  = null;
         };
     },
+               
+    
 
     /**
      * Fügt einen neuen Eintrag zur Registry hinzu.
@@ -164,15 +166,6 @@ LocalNotification.prototype = {
     ontrigger: function (id, state, json) {},
 
     /**
-     * Fires after the notification was clicked.
-     *
-     * @param {String} id    The ID of the notification
-     * @param {String} state Either "foreground" or "background"
-     * @param {String} json  A custom (JSON) string
-     */
-    onclick: function (id, state, json) {},
-
-    /**
      * Fires if the notification was canceled.
      *
      * @param {String} id    The ID of the notification
@@ -182,8 +175,38 @@ LocalNotification.prototype = {
     oncancel: function (id, state, json) {}
 };
 
+
 var plugin = new LocalNotification();
 
+// hide the internal callback from property enumeration in js debugger               
+Object.defineProperty(plugin, "_signalReady",{
+	enumerable: false,
+    writable: false,
+    value: function(){
+    	cordova.exec(null, null, 'LocalNotification', 'callbackRegistered', []);
+    }
+});
+               
+// define a 'private' field storage for the handler         
+Object.defineProperty(plugin, "_ontrigger",{
+	enumerable: false,
+    writable: true,
+    value: plugin.ontrigger
+});
+
+// override the 'public' handler property so we can watch it and let the 
+// native plugin know we have registered a handler and are ready to receive events             
+Object.defineProperty(plugin, "ontrigger",{
+	enumerable: true,
+    set: function(value){                                
+    	plugin._ontrigger = value;                             
+        this._signalReady();
+    },
+	get: function(){
+    	return plugin._ontrigger;
+	}
+});
+               
 document.addEventListener('deviceready', function () {
     plugin.applyPlatformSpecificOptions();
 }, false);

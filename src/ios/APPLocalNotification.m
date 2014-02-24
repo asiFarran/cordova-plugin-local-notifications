@@ -46,8 +46,23 @@
 
 // Schlüssel-Präfix für alle archivierten Meldungen
 NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
+BOOL canDeliverNotificationEvents = NO;
+NSMutableArray *jsEventQueue;
 
 @implementation APPLocalNotification
+
+- (void) callbackRegistered:(CDVInvokedUrlCommand*)command
+{
+    if(jsEventQueue != nil)
+    {
+        for(NSString *notificationEvent in jsEventQueue)
+        {
+            [self.commandDelegate evalJs:notificationEvent];
+        }
+    }
+    
+    canDeliverNotificationEvents = YES;
+}
 
 /**
  * Fügt eine neue Notification-Eintrag hinzu.
@@ -288,18 +303,14 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
 {
     UIApplicationState state          = [[UIApplication sharedApplication] applicationState];
     bool isActive                     = state == UIApplicationStateActive;
-
+    
     UILocalNotification* notification = [localNotification object];
     NSString* id                      = [notification.userInfo objectForKey:@"id"];
     NSString* json                    = [notification.userInfo objectForKey:@"json"];
     BOOL autoCancel                   = [[notification.userInfo objectForKey:@"autoCancel"] boolValue];
 
-    NSDate* now                       = [NSDate date];
-    NSTimeInterval fireDateDistance   = [now timeIntervalSinceDate:notification.fireDate];
-    NSString* event                   = (fireDateDistance < 0.05) ? @"trigger" : @"click";
-
-    [self fireEvent:event id:id json:json];
-
+    [self fireEvent:@"trigger" id:id json:json];
+    
     if (autoCancel && !isActive)
     {
         [self cancelNotificationWithId:id fireEvent:YES];
@@ -316,7 +327,7 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
 
     if (localNotification)
     {
-        [self didReceiveLocalNotification:notification];
+       [self didReceiveLocalNotification:[NSNotification notificationWithName:CDVLocalNotification object:localNotification]];
     }
 }
 
@@ -364,7 +375,19 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
     NSString* params = [NSString stringWithFormat:@"\"%@\",\"%@\",\\'%@\\'", id, stateName, json];
     NSString* js     = [NSString stringWithFormat:@"setTimeout('plugin.notification.local.on%@(%@)',0)", event, params];
 
-    [self.commandDelegate evalJs:js];
+    if(canDeliverNotificationEvents)
+    {
+        [self.commandDelegate evalJs:js];
+    }
+    else
+    {
+        if(jsEventQueue == nil)
+        {
+            jsEventQueue = [[NSMutableArray alloc] init];
+        }
+        
+        [jsEventQueue addObject:js];
+    }
 }
 
 @end
