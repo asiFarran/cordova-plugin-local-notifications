@@ -372,7 +372,7 @@ NSMutableArray *jsEventQueue;
     bool isActive            = state == UIApplicationStateActive;
     NSString* stateName      = isActive ? @"foreground" : @"background";
 
-    NSString* params = [NSString stringWithFormat:@"\"%@\",\"%@\",\\'%@\\'", id, stateName, json];
+    NSString* params = [NSString stringWithFormat:@"\"%@\",\"%@\",\\%@\\", id, stateName, json];
     NSString* js     = [NSString stringWithFormat:@"setTimeout('plugin.notification.local.on%@(%@)',0)", event, params];
 
     if(canDeliverNotificationEvents)
