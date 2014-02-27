@@ -4,6 +4,7 @@ Cordova LocalNotification-Plugin
 A Local notification plugins for Cordova 3.x.x
 
 by Sebastián Katzer ([github.com/katzer](https://github.com/katzer))
+
 modified by Asi Farran to better support cold-start scenarios ([github.com/asiFarran](https://github.com/asiFarran)) 
 
 ## Supported Platforms
