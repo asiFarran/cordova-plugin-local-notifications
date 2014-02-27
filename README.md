@@ -1,9 +1,10 @@
 Cordova LocalNotification-Plugin
 ==================================
 
-A bunch of local notification plugins for Cordova 3.x.x
+A Local notification plugins for Cordova 3.x.x
 
 by Sebastián Katzer ([github.com/katzer](https://github.com/katzer))
+modified by Asi Farran to better support cold-start scenarios ([github.com/asiFarran](https://github.com/asiFarran)) 
 
 ## Supported Platforms
 - **iOS**<br>
@@ -12,9 +13,6 @@ See [Local and Push Notification Programming Guide](http://developer.apple.com/l
 - **Android** *(SDK >=11)*<br>
 See [Notification Guide](http://developer.android.com/guide/topics/ui/notifiers/notifications.html) for detailed informations and screenshots.
 
-- **WP8**<br>
-See [Local notifications for Windows Phone](http://msdn.microsoft.com/en-us/library/windowsphone/develop/jj207047.aspx) for detailed informations and screenshots.
-<br>*Windows Phone 8.0 has no notification center. Instead local notifications are realized through live tiles updates.*
 
 
 ## Dependencies
@@ -50,6 +48,8 @@ or to use this exact version:
 More informations can be found [here](https://build.phonegap.com/plugins/413).
 
 ## Release Notes
+
+
 #### Version 0.7.3 (not yet released)
 - [bugfix:] cancel callbacks have not been fired after all notifications have been canceled on iOS.
 - [change:] The `oncancel` callback will be called at last if `autoCancel` is set to true (iOS).
@@ -164,8 +164,8 @@ The method cancels all notifications which were previously added by the applicat
 window.plugin.notification.local.cancelAll();
 ```
 
-### onadd() | ontrigger() | onclick() | oncancel()
-There are 4 different callback types available. For each of them one listener can be specified. The listener has to be a function and takes the following arguments:
+### onadd() | ontrigger() | oncancel()
+There are 3 different callback types available. For each of them one listener can be specified. The listener has to be a function and takes the following arguments:
  - event: The Name of the event
  - id: The ID of the notification
  - json:  A custom (JSON) string
@@ -173,7 +173,6 @@ There are 4 different callback types available. For each of them one listener ca
 ```javascript
 window.plugin.notification.local.on_callback_ = function (id, state, json) {};
 ```
-**Note:** The *ontrigger* callback is only invoked in background if the app is not suspended!
 
 ### getDefaults()
 Gives an overview about all available notification properties for the platform and their default values. The function returns an object.
@@ -226,7 +225,7 @@ window.plugin.notification.local.add({
     json:       JSON.stringify({ test: 123 })
 });
 
-window.plugin.notification.local.onclick = function (id, state, json) {
+window.plugin.notification.local.ontrigger = function (id, state, json) {
     console.log(id, JSON.parse(json).test);
 }
 ```
@@ -293,16 +292,6 @@ window.plugin.notification.local.add({ sound: 'www/sounds/beep.caf' });
 **Note:** The right to play notification sounds in the notification center settings has to be granted.<br>
 **Note:** Custom sounds must be under 30 seconds when played. If a custom sound is over that limit, the default system sound is played instead.
 
-### LiveTile background images on WP8
-LiveTile's have the ability to display images for different sizes. These images can be defined through the `smallImage`, `image` and `wideImage` properties.<br>
-An image must be defined as a relative or absolute URI.
-```javascript
-/**
- * Displays the application icon as the livetile's background image
- */
-window.plugin.notification.local.add({ image: 'appdata:ApplicationIcon.png' })
-```
-All images can be restored to the default ones by canceling the notification.
 
 ### Custom repeating interval on Android
 To specify a custom interval, the `repeat` property can be assigned with an number in minutes.
@@ -318,8 +307,6 @@ window.plugin.notification.local.add({ repeat: 15 });
 ### No sound is played on iOS 7
 The right to play notification sounds in the notification center settings has to be granted.
 
-### Adding a notification on WP8
-An application can only display one notification at a time. Each time a new notification has to be added, the application live tile's data will be overwritten by the new ones.
 
 ### TypeError: Cannot read property 'currentVersion' of null
 Along with Cordova 3.2 and Windows Phone 8 the `version.bat` script has to be renamed to `version`.
