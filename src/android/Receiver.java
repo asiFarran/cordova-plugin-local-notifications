@@ -72,7 +72,6 @@ public class Receiver extends BroadcastReceiver {
         // The context may got lost if the app was not running before
         LocalNotification.setContext(context);
 
-        fireTriggerEvent();
 
         if (options.getInterval() == 0) {
             LocalNotification.unpersist(options.getId());
@@ -82,9 +81,15 @@ public class Receiver extends BroadcastReceiver {
             LocalNotification.add(options.moveDate(), false);
         }
 
-        Builder notification = buildNotification();
+        if(LocalNotification.isActive() && LocalNotification.isInBackground() == false){
 
-        showNotification(notification);
+            LocalNotification.fireEvent("trigger", options.getId(), options.getJSON());
+
+        }else{
+            Builder notification = buildNotification(context);
+
+            showNotification(notification);
+        }
     }
 
     /*
@@ -115,11 +120,13 @@ public class Receiver extends BroadcastReceiver {
     /**
      * Erstellt die Notification.
      */
-    private Builder buildNotification () {
+    private Builder buildNotification (Context context) {
         Bitmap icon = BitmapFactory.decodeResource(context.getResources(), options.getIcon());
 
+        String title = options.getTitle().equals("") ? getAppName(context) : options.getTitle();
+
         Builder notification = new Notification.Builder(context)
-        .setContentTitle(options.getTitle())
+        .setContentTitle(title)
         .setContentText(options.getMessage())
         .setNumber(options.getBadge())
         .setTicker(options.getMessage())
@@ -171,10 +178,9 @@ public class Receiver extends BroadcastReceiver {
         }
     }
 
-    /**
-     * Fires ontrigger event.
-     */
-    private void fireTriggerEvent () {
-        LocalNotification.fireEvent("trigger", options.getId(), options.getJSON());
+    private static String getAppName(Context context){
+        CharSequence appName = context.getPackageManager().getApplicationLabel(context.getApplicationInfo());
+
+        return (String)appName;
     }
 }

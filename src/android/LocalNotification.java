@@ -55,6 +55,7 @@ public class LocalNotification extends CordovaPlugin {
     private   static CordovaWebView webView        = null;
     protected static Context context               = null;
 
+    private static boolean canDeliverNotificationEvents = false;
     private   static ArrayList<String> callbackQueue = new ArrayList<String>();
 
     @Override
@@ -63,8 +64,6 @@ public class LocalNotification extends CordovaPlugin {
 
         LocalNotification.webView = super.webView;
         LocalNotification.context = super.cordova.getActivity().getApplicationContext();
-
-        execPendingCallbacks();
     }
 
     @Override
@@ -97,10 +96,25 @@ public class LocalNotification extends CordovaPlugin {
         }
 
         if (action.equalsIgnoreCase("cancelAll")) {
+
             cordova.getThreadPool().execute( new Runnable() {
                 public void run() {
                     cancelAll();
                     unpersistAll();
+                }
+            });
+
+            return true;
+        }
+
+        if (action.equalsIgnoreCase("callbackRegistered")) {
+
+            canDeliverNotificationEvents = true;
+
+            cordova.getThreadPool().execute( new Runnable() {
+
+                public void run() {
+                    execPendingCallbacks();
                 }
             });
 
@@ -243,9 +257,7 @@ public class LocalNotification extends CordovaPlugin {
         String params = "\"" + id + "\",\"" + state + "\",\\'" + JSONObject.quote(json) + "\\'.replace(/(^\"|\"$)/g, \\'\\')";
         String js     = "setTimeout('plugin.notification.local.on" + event + "(" + params + ")',0)";
 
-        // after reboot, LocalNotification.webView is always be null
-        // call background callback later
-        if (webView == null) {
+        if (canDeliverNotificationEvents == false) {
             callbackQueue.add(js);
         } else {
             webView.sendJavascript(js);
@@ -285,12 +297,17 @@ public class LocalNotification extends CordovaPlugin {
     /**
      * Gibt an, ob die App im Hintergrund läuft.
      */
-    private static boolean isInBackground () {
+    public static boolean isInBackground () {
         try {
             return !context.getPackageName().equalsIgnoreCase(((ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE)).getRunningTasks(1).get(0).topActivity.getPackageName());
         } catch (Exception e) {
             return true;
         }
+    }
+
+    public static boolean isActive()
+    {
+        return webView != null;
     }
 
     /**
