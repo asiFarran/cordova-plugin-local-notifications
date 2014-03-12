@@ -136,6 +136,11 @@ public class Receiver extends BroadcastReceiver {
         .setAutoCancel(options.getAutoCancel())
         .setOngoing(options.getOngoing());
 
+        if(Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) // only available on API level 16 and newer
+        {
+            notification.setStyle(new Notification.BigTextStyle().bigText(options.getMessage()));
+        }
+        
         setClickEvent(notification);
 
         return notification;
