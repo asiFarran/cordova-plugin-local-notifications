@@ -253,7 +253,11 @@ public class LocalNotification extends CordovaPlugin {
      * @param {String} json  A custom (JSON) string
      */
     public static void fireEvent (String event, String id, String json) {
-        String state  = isInBackground() ? "background" : "foreground";
+        fireEvent(event, id, json, isInBackground());
+    }
+
+    public static void fireEvent (String event, String id, String json, Boolean isInBackground) {
+        String state  = isInBackground ? "background" : "foreground";
         String params = "\"" + id + "\",\"" + state + "\",\\'" + JSONObject.quote(json) + "\\'.replace(/(^\"|\"$)/g, \\'\\')";
         String js     = "setTimeout('plugin.notification.local.on" + event + "(" + params + ")',0)";
 
